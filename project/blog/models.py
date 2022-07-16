@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
@@ -22,3 +24,6 @@ class Post(models.Model):
             'post',
             args=[self.id],
         )
+
+    def was_published_recently(self):
+        return self.published >= timezone.now() + datetime.timedelta(days=1)
