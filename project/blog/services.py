@@ -21,3 +21,9 @@ class BlogService:
         new_post = post_form.save(commit=False)
         new_post.author = user
         new_post.save()
+
+    def save_new_post_api(self, post, username):
+        user = User.objects.get(username=username)
+        new_post = post.save()
+        new_post.author = user
+        new_post.save()

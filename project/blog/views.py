@@ -1,50 +1,38 @@
-from django.shortcuts import render, redirect
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from blog.forms import PostForm
+from blog.serializers import PostSerializer
 from blog.services import BlogService
 
 
-def index(request):
+class IndexView(APIView):
 
-    blog_service = BlogService()
-    posts = blog_service.get_posts()
+    def get(self, request):
+        blog_service = BlogService()
+        posts = blog_service.get_posts()
+        serialized_posts = PostSerializer(posts, many=True)
 
-    return render(
-        request,
-        'blog/index.html',
-        {
-            'posts': posts,
-        }
-    )
+        return Response(serialized_posts.data, status=status.HTTP_200_OK)
 
 
-def post(request, post_id):
-    blog_service = BlogService()
-    post = blog_service.get_post_by_id(post_id)
-    return render(
-        request,
-        'blog/post.html',
-        {
-            'post': post,
-        }
-    )
+class PostView(APIView):
+    def get(self, request, post_id):
+        blog_service = BlogService()
+        post = blog_service.get_post_by_id(post_id)
+        serialized_post = PostSerializer(post)
+
+        return Response(serialized_post.data, status=status.HTTP_200_OK)
 
 
-def create_new_post(request):
-    if request.method == 'POST':
-        post_form = PostForm(data=request.POST)
+class NewPost(APIView):
+
+    def post(self, request):
         username = request.user
-        if post_form.is_valid():
+        post = PostSerializer(data=request.data)
+        if post.is_valid():
             blog_service = BlogService()
-            blog_service.save_new_post(post_form, username)
+            blog_service.save_new_post_api(post, username)
+            return Response(post.data, status=status.HTTP_201_CREATED)
+        return Response(post.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return redirect('index')
-    else:
-        post_form = PostForm()
-    return render(
-        request,
-        'blog/create.html',
-        {
-            'post_form': post_form,
-        }
-    )
